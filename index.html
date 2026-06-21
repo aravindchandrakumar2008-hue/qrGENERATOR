@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AiswaryaQR — Maps QR Generator | Aiswarya Printers</title>
+  <meta name="description" content="Generate a clean, scannable QR code from any Google Maps URL. A professional tool by Aiswarya Printers, developed by Aravind." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:           #0a0c12;
+      --surface:      #111520;
+      --surface-2:    #161b2c;
+      --border:       #1e2438;
+      --border-hi:    #2a3354;
+      --accent:       #3b82f6;
+      --accent-dim:   rgba(59,130,246,0.12);
+      --accent-glow:  rgba(59,130,246,0.25);
+      --teal:         #0ea5e9;
+      --purple:       #8b5cf6;
+      --green:        #10b981;
+      --danger:       #ef4444;
+      --danger-dim:   rgba(239,68,68,0.1);
+      --text-1:       #f1f5f9;
+      --text-2:       #94a3b8;
+      --text-3:       #475569;
+      --text-4:       #2d3748;
+      --radius-xl:    20px;
+      --radius-lg:    14px;
+      --radius-md:    10px;
+      --radius-sm:    7px;
+      --transition:   0.2s ease;
+      --shadow-md:    0 4px 20px rgba(0,0,0,0.5);
+      --shadow-lg:    0 16px 60px rgba(0,0,0,0.6);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text-1);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 60% 40% at 20% 10%, rgba(59,130,246,0.07) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 35% at 80% 85%, rgba(139,92,246,0.06) 0%, transparent 60%);
+    }
+
+    /* ── Navbar ── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 32px; height: 60px;
+      background: rgba(10,12,18,0.88);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .nav-logo {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .nav-logo svg { width: 16px; height: 16px; color: #fff; }
+    .nav-name { font-size: 0.95rem; font-weight: 700; color: var(--text-1); letter-spacing: -0.02em; }
+    .nav-name em { font-style: normal; color: var(--accent); }
+    .nav-tag { font-size: 0.7rem; font-weight: 500; color: var(--text-3); letter-spacing: 0.04em; }
+
+    /* ── Main ── */
+    main {
+      position: relative; z-index: 1;
+      flex: 1;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 52px 20px 80px;
+    }
+
+    /* ── Page header ── */
+    .page-header {
+      text-align: center; max-width: 540px; margin-bottom: 44px;
+      animation: fadeUp 0.5s ease both;
+    }
+    .tag-pill {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: var(--accent-dim);
+      border: 1px solid rgba(59,130,246,0.25);
+      border-radius: 999px; padding: 5px 14px;
+      font-size: 0.72rem; font-weight: 600;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 20px;
+    }
+    .tag-pill::before {
+      content: ''; width: 6px; height: 6px; border-radius: 50%;
+      background: var(--accent); animation: blink 2s ease infinite;
+    }
+    @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+
+    h1 {
+      font-size: clamp(1.9rem, 4vw, 2.75rem);
+      font-weight: 700; letter-spacing: -0.04em; line-height: 1.15;
+      color: var(--text-1); margin-bottom: 14px;
+    }
+    h1 em {
+      font-style: normal;
+      background: linear-gradient(90deg, var(--accent), var(--teal));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .page-sub { font-size: 0.95rem; color: var(--text-2); line-height: 1.65; }
+
+    /* ── Card ── */
+    .card {
+      width: 100%; max-width: 900px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-lg);
+      display: grid; grid-template-columns: 1fr 1fr;
+      animation: fadeUp 0.5s 0.1s ease both;
+      overflow: hidden;
+    }
+    @keyframes fadeUp {
+      from { opacity:0; transform: translateY(16px); }
+      to   { opacity:1; transform: translateY(0); }
+    }
+
+    /* ── Left panel ── */
+    .panel-left {
+      padding: 36px 32px;
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; gap: 26px;
+    }
+    .panel-title {
+      font-size: 0.7rem; font-weight: 600; color: var(--text-3);
+      letter-spacing: 0.1em; text-transform: uppercase;
+    }
+    .field { display: flex; flex-direction: column; gap: 8px; }
+    .field-label { font-size: 0.8rem; font-weight: 500; color: var(--text-2); }
+
+    .input-wrap { position: relative; }
+    .input-wrap .ico {
+      position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
+      width: 15px; height: 15px; color: var(--text-3);
+      pointer-events: none; transition: color var(--transition);
+    }
+    .input-wrap:focus-within .ico { color: var(--accent); }
+
+    input[type="url"] {
+      width: 100%;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      color: var(--text-1);
+      font-family: 'Inter', sans-serif; font-size: 0.875rem;
+      padding: 11px 14px 11px 38px; outline: none;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    input[type="url"]::placeholder { color: var(--text-3); }
+    input[type="url"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    select {
+      width: 100%;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      color: var(--text-1);
+      font-family: 'Inter', sans-serif; font-size: 0.875rem;
+      padding: 11px 36px 11px 14px; outline: none; cursor: pointer;
+      appearance: none; -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 12px center;
+      transition: border-color var(--transition);
+    }
+    select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+    select option { background: var(--surface); }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+    /* Color swatches */
+    .color-row { display: flex; gap: 7px; flex-wrap: wrap; align-items: center; }
+    .swatch {
+      width: 30px; height: 30px; border-radius: var(--radius-sm);
+      border: 2px solid transparent; cursor: pointer; position: relative; overflow: hidden;
+      transition: transform var(--transition), border-color var(--transition);
+      flex-shrink: 0;
+    }
+    .swatch:hover { transform: scale(1.12); }
+    .swatch.active { border-color: #fff; }
+    .swatch input[type="color"] {
+      position: absolute; inset: -4px; width: calc(100% + 8px);
+      height: calc(100% + 8px); opacity: 0; cursor: pointer;
+    }
+    .swatch-custom {
+      background: var(--surface-2); border: 1px dashed var(--border-hi);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .swatch-custom svg { width: 13px; height: 13px; color: var(--text-3); pointer-events: none; }
+
+    /* Error bar */
+    .error-bar {
+      display: none; align-items: center; gap: 8px;
+      background: var(--danger-dim); border: 1px solid rgba(239,68,68,0.2);
+      border-radius: var(--radius-sm); padding: 9px 12px;
+      font-size: 0.8rem; color: var(--danger);
+    }
+    .error-bar.show { display: flex; }
+    .error-bar svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+    .hr { height: 1px; background: var(--border); }
+
+    /* Generate button */
+    .btn-gen {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; background: var(--accent);
+      border: none; border-radius: var(--radius-md);
+      color: #fff; font-family: 'Inter', sans-serif;
+      font-size: 0.875rem; font-weight: 600; letter-spacing: -0.01em;
+      padding: 13px 20px; cursor: pointer;
+      box-shadow: 0 4px 16px rgba(59,130,246,0.3);
+      transition: background var(--transition), transform var(--transition), box-shadow var(--transition);
+    }
+    .btn-gen svg { width: 16px; height: 16px; }
+    .btn-gen:hover { background: #2563eb; transform: translateY(-1px); box-shadow: 0 6px 22px rgba(59,130,246,0.4); }
+    .btn-gen:active { transform: translateY(0); }
+
+    /* ── Right panel ── */
+    .panel-right {
+      padding: 36px 32px;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 22px;
+      min-height: 500px;
+    }
+
+    /* Empty state */
+    .empty-state { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
+    .empty-icon {
+      width: 72px; height: 72px;
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: 18px;
+      display: flex; align-items: center; justify-content: center; margin-bottom: 4px;
+    }
+    .empty-icon svg { width: 30px; height: 30px; color: var(--text-4); }
+    .empty-state h3 { font-size: 0.95rem; font-weight: 600; color: var(--text-2); }
+    .empty-state p  { font-size: 0.82rem; color: var(--text-3); max-width: 200px; line-height: 1.55; }
+
+    /* Output */
+    .output-zone { display: none; flex-direction: column; align-items: center; gap: 20px; width: 100%; }
+    .output-zone.on { display: flex; }
+
+    .qr-frame {
+      background: #ffffff;
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      box-shadow: var(--shadow-md), 0 0 0 1px rgba(255,255,255,0.05);
+      animation: qrIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+    @keyframes qrIn {
+      from { transform: scale(0.88) translateY(8px); opacity: 0; }
+      to   { transform: scale(1) translateY(0); opacity: 1; }
+    }
+    #qrCanvas { display: block; }
+
+    /* URL chip */
+    .url-chip {
+      display: flex; align-items: center; gap: 7px;
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: var(--radius-md); padding: 8px 14px;
+      width: 100%; max-width: 320px; overflow: hidden;
+    }
+    .url-chip svg { width: 13px; height: 13px; color: var(--accent); flex-shrink: 0; }
+    .url-chip span { font-size: 0.75rem; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* Stats */
+    .stats-bar {
+      display: flex; width: 100%; max-width: 320px;
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: var(--radius-md); overflow: hidden;
+    }
+    .stat { flex: 1; padding: 10px 12px; text-align: center; border-right: 1px solid var(--border); }
+    .stat:last-child { border-right: none; }
+    .stat-val { font-size: 0.82rem; font-weight: 700; color: var(--text-1); }
+    .stat-lbl { font-size: 0.64rem; font-weight: 500; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.07em; margin-top: 2px; }
+
+    /* Download row */
+    .dl-row { display: flex; gap: 8px; width: 100%; max-width: 320px; }
+    .btn-dl {
+      flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+      border: none; border-radius: var(--radius-md);
+      font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 600;
+      padding: 10px 14px; cursor: pointer;
+      transition: all var(--transition); letter-spacing: -0.01em;
+    }
+    .btn-dl svg { width: 13px; height: 13px; }
+    .btn-png { background: #0ea5e9; color: #fff; box-shadow: 0 2px 10px rgba(14,165,233,0.25); }
+    .btn-png:hover { background: #0284c7; transform: translateY(-1px); }
+    .btn-svg { background: var(--purple); color: #fff; box-shadow: 0 2px 10px rgba(139,92,246,0.25); }
+    .btn-svg:hover { background: #7c3aed; transform: translateY(-1px); }
+    .btn-copy { flex: 0 0 40px; padding: 10px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text-2); }
+    .btn-copy:hover { border-color: var(--border-hi); color: var(--text-1); transform: translateY(-1px); }
+    .btn-copy.ok { border-color: var(--green); color: var(--green); }
+
+    /* ── Footer ── */
+    footer {
+      position: relative; z-index: 1;
+      border-top: 1px solid var(--border);
+      padding: 16px 32px;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 6px;
+    }
+    .f-left { font-size: 0.75rem; color: var(--text-3); }
+    .f-left strong { color: var(--text-2); font-weight: 600; }
+    .f-right { font-size: 0.72rem; color: var(--text-3); }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed; bottom: 28px; left: 50%;
+      transform: translateX(-50%) translateY(12px);
+      background: var(--surface); border: 1px solid var(--border-hi);
+      border-radius: 999px; padding: 10px 20px;
+      font-size: 0.82rem; font-weight: 500; color: var(--text-1);
+      display: flex; align-items: center; gap: 8px;
+      opacity: 0; pointer-events: none;
+      transition: all 0.25s ease; z-index: 999;
+      box-shadow: var(--shadow-md);
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .toast svg { width: 14px; height: 14px; color: var(--green); }
+
+    /* ── Responsive ── */
+    @media (max-width: 680px) {
+      nav { padding: 0 16px; }
+      main { padding: 36px 14px 60px; }
+      .card { grid-template-columns: 1fr; }
+      .panel-left { border-right: none; border-bottom: 1px solid var(--border); }
+      .panel-right { min-height: auto; }
+      footer { flex-direction: column; align-items: flex-start; }
+    }
+    @media (max-width: 400px) {
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav>
+  <a class="nav-brand" href="#">
+    <div class="nav-logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="7" height="7" rx="1"/>
+        <rect x="14" y="3" width="7" height="7" rx="1"/>
+        <rect x="3" y="14" width="7" height="7" rx="1"/>
+        <path d="M14 14h3v3h-3zM17 17h3v3h-3zM14 20h3"/>
+      </svg>
+    </div>
+    <span class="nav-name">Aiswarya<em>QR</em></span>
+  </a>
+  <span class="nav-tag">Aiswarya Printers</span>
+</nav>
+
+<main>
+
+  <!-- Page heading -->
+  <div class="page-header">
+    <div class="tag-pill">Maps QR Generator</div>
+    <h1>Turn any Maps link<br/>into a <em>QR Code</em></h1>
+    <p class="page-sub">Paste a Google Maps URL and get a clean, print-ready QR code in seconds.</p>
+  </div>
+
+  <!-- Card -->
+  <div class="card">
+
+    <!-- LEFT -->
+    <div class="panel-left">
+      <p class="panel-title">Configuration</p>
+
+      <!-- URL -->
+      <div class="field">
+        <label class="field-label" for="gmapUrl">Google Maps URL</label>
+        <div class="input-wrap">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+            <circle cx="12" cy="9" r="2.5"/>
+          </svg>
+          <input type="url" id="gmapUrl" placeholder="https://maps.google.com/…" autocomplete="off" spellcheck="false" />
+        </div>
+        <div class="error-bar" id="errorBar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <span id="errorText">Please enter a valid URL.</span>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <!-- Options -->
+      <div class="grid-2">
+        <div class="field">
+          <label class="field-label" for="qrSize">Output Size</label>
+          <select id="qrSize">
+            <option value="180">Small — 180px</option>
+            <option value="240" selected>Medium — 240px</option>
+            <option value="320">Large — 320px</option>
+            <option value="440">XL — 440px</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="field-label" for="qrEcc">Error Correction</label>
+          <select id="qrEcc">
+            <option value="L">Low (7%)</option>
+            <option value="M" selected>Medium (15%)</option>
+            <option value="Q">Quartile (25%)</option>
+            <option value="H">High (30%)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Color -->
+      <div class="field">
+        <label class="field-label">QR Color</label>
+        <div class="color-row" id="colorRow">
+          <div class="swatch active" style="background:#111827" data-color="#111827" title="Charcoal"></div>
+          <div class="swatch" style="background:#1e3a5f" data-color="#1e3a5f" title="Navy"></div>
+          <div class="swatch" style="background:#3b82f6" data-color="#3b82f6" title="Blue"></div>
+          <div class="swatch" style="background:#0f766e" data-color="#0f766e" title="Teal"></div>
+          <div class="swatch" style="background:#7c3aed" data-color="#7c3aed" title="Purple"></div>
+          <div class="swatch" style="background:#b45309" data-color="#b45309" title="Amber"></div>
+          <div class="swatch swatch-custom" id="swCustom" title="Custom">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 8v8M8 12h8"/>
+            </svg>
+            <input type="color" id="colorPicker" value="#3b82f6" />
+          </div>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <button class="btn-gen" id="btnGen" onclick="generateQR()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="13 2 13 9 20 9"/>
+          <path d="M20 14v6a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2h7"/>
+        </svg>
+        Generate QR Code
+      </button>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="panel-right">
+
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7" rx="1.5"/>
+            <rect x="14" y="3" width="7" height="7" rx="1.5"/>
+            <rect x="3" y="14" width="7" height="7" rx="1.5"/>
+            <path d="M14 14h3v3h-3zM17 17h3v3h-3zM14 20h3"/>
+          </svg>
+        </div>
+        <h3>QR code preview</h3>
+        <p>Paste a Google Maps link and click Generate</p>
+      </div>
+
+      <div class="output-zone" id="outputZone">
+
+        <div class="qr-frame" id="qrFrame">
+          <div id="qrCanvas"></div>
+        </div>
+
+        <div class="url-chip">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07L11 5.93"/>
+            <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07L13 18.07"/>
+          </svg>
+          <span id="urlPreview">–</span>
+        </div>
+
+        <div class="stats-bar">
+          <div class="stat">
+            <div class="stat-val" id="statSize">–</div>
+            <div class="stat-lbl">Size</div>
+          </div>
+          <div class="stat">
+            <div class="stat-val" id="statEcc">–</div>
+            <div class="stat-lbl">ECC</div>
+          </div>
+          <div class="stat">
+            <div class="stat-val" id="statChars">–</div>
+            <div class="stat-lbl">Chars</div>
+          </div>
+        </div>
+
+        <div class="dl-row">
+          <button class="btn-dl btn-png" onclick="downloadPNG()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            PNG
+          </button>
+          <button class="btn-dl btn-svg" onclick="downloadSVG()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            SVG
+          </button>
+          <button class="btn-dl btn-copy" id="btnCopy" onclick="copyURL()" title="Copy URL">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2"/>
+              <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+            </svg>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- Footer -->
+<footer>
+  <span class="f-left"><strong>AiswaryaQR</strong> &nbsp;·&nbsp; Aiswarya Printers</span>
+  <span class="f-right">Developed by <strong style="color:#64748b;">Aravind</strong></span>
+</footer>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="20 6 9 17 4 12"/>
+  </svg>
+  <span id="toastText">Done!</span>
+</div>
+
+<script>
+  let currentUrl   = '';
+  let currentColor = '#111827';
+
+  /* swatches */
+  document.querySelectorAll('.swatch').forEach(sw => {
+    sw.addEventListener('click', () => {
+      if (sw.id === 'swCustom') return;
+      document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+      sw.classList.add('active');
+      currentColor = sw.dataset.color;
+      if (currentUrl) regenerate();
+    });
+  });
+
+  document.getElementById('colorPicker').addEventListener('input', e => {
+    document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+    document.getElementById('swCustom').classList.add('active');
+    currentColor = e.target.value;
+    if (currentUrl) regenerate();
+  });
+
+  document.getElementById('qrSize').addEventListener('change', () => { if (currentUrl) regenerate(); });
+  document.getElementById('qrEcc').addEventListener('change',  () => { if (currentUrl) regenerate(); });
+  document.getElementById('gmapUrl').addEventListener('keydown', e => { if (e.key === 'Enter') generateQR(); });
+
+  function isValidUrl(u) {
+    try { const p = new URL(u); return p.protocol === 'https:' || p.protocol === 'http:'; }
+    catch { return false; }
+  }
+  function showError(msg) {
+    document.getElementById('errorText').textContent = msg;
+    document.getElementById('errorBar').classList.add('show');
+    document.getElementById('gmapUrl').style.borderColor = 'rgba(239,68,68,0.5)';
+  }
+  function clearError() {
+    document.getElementById('errorBar').classList.remove('show');
+    document.getElementById('gmapUrl').style.borderColor = '';
+  }
+
+  function generateQR() {
+    const raw = document.getElementById('gmapUrl').value.trim();
+    clearError();
+    if (!raw)             { showError('Please enter a Google Maps URL.'); return; }
+    if (!isValidUrl(raw)) { showError("Doesn't look like a valid URL. Paste the full link."); return; }
+    currentUrl = raw;
+    regenerate();
+  }
+
+  function regenerate() {
+    const size = parseInt(document.getElementById('qrSize').value);
+    const ecc  = document.getElementById('qrEcc').value;
+    const eccMap = { L: QRCode.CorrectLevel.L, M: QRCode.CorrectLevel.M, Q: QRCode.CorrectLevel.Q, H: QRCode.CorrectLevel.H };
+
+    const container = document.getElementById('qrCanvas');
+    container.innerHTML = '';
+    new QRCode(container, {
+      text: currentUrl, width: size, height: size,
+      colorDark: currentColor, colorLight: '#ffffff',
+      correctLevel: eccMap[ecc] || QRCode.CorrectLevel.M
+    });
+
+    document.getElementById('emptyState').style.display = 'none';
+    document.getElementById('outputZone').classList.add('on');
+
+    const frame = document.getElementById('qrFrame');
+    frame.style.animation = 'none'; frame.offsetHeight; frame.style.animation = '';
+
+    document.getElementById('urlPreview').textContent =
+      currentUrl.length > 52 ? currentUrl.slice(0, 52) + '…' : currentUrl;
+    document.getElementById('statSize').textContent  = size + 'px';
+    document.getElementById('statEcc').textContent   = ecc;
+    document.getElementById('statChars').textContent = currentUrl.length;
+  }
+
+  /* ─ Download PNG (clean, no watermark) ─ */
+  function downloadPNG() {
+    const c = document.querySelector('#qrCanvas canvas');
+    if (!c) return;
+    const link = document.createElement('a');
+    link.download = 'aiswaryaqr.png';
+    link.href = c.toDataURL('image/png');
+    link.click();
+    showToast('PNG downloaded');
+  }
+
+  /* ─ Download SVG (clean, no watermark) ─ */
+  function downloadSVG() {
+    const c = document.querySelector('#qrCanvas canvas');
+    if (!c) return;
+    const size = parseInt(document.getElementById('qrSize').value);
+    const dataUrl = c.toDataURL('image/png');
+    const svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+  <image x="0" y="0" width="${size}" height="${size}" xlink:href="${dataUrl}"/>
+</svg>`;
+    const blob = new Blob([svg], { type: 'image/svg+xml' });
+    const link = document.createElement('a');
+    link.download = 'aiswaryaqr.svg';
+    link.href = URL.createObjectURL(blob);
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(link.href), 10000);
+    showToast('SVG downloaded');
+  }
+
+  /* ─ Copy URL ─ */
+  function copyURL() {
+    if (!currentUrl) return;
+    const btn = document.getElementById('btnCopy');
+    navigator.clipboard.writeText(currentUrl).catch(() => {
+      const t = document.createElement('textarea');
+      t.value = currentUrl; document.body.appendChild(t); t.select();
+      document.execCommand('copy'); document.body.removeChild(t);
+    });
+    btn.classList.add('ok');
+    setTimeout(() => btn.classList.remove('ok'), 2000);
+    showToast('URL copied to clipboard');
+  }
+
+  let toastTimer;
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    document.getElementById('toastText').textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+  }
+</script>
+</body>
+</html>
